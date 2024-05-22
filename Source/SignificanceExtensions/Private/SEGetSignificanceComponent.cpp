@@ -7,9 +7,9 @@
 
 USEGetSignificanceComponent::USEGetSignificanceComponent( const FObjectInitializer & object_initializer ) :
     Super( object_initializer ),
-    bOwnerImplementsInterface( false ),
     bUseFixedSignificance( false ),
-    FixedSignificance( 1.0f )
+    FixedSignificance( 1.0f ),
+    bOwnerImplementsInterface( false )
 {
     PrimaryComponentTick.bCanEverTick = false;
 
