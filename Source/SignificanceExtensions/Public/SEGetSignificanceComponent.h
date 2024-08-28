@@ -14,6 +14,12 @@ struct FSESignificanceDistance
 {
     GENERATED_BODY()
 
+    FSESignificanceDistance() :
+        Significance( 0.0f ),
+        DistanceThreshold( 0.0f )
+    {
+    }
+
     UPROPERTY( EditAnywhere )
     float Significance;
 
