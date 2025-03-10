@@ -50,10 +50,15 @@ protected:
     UFUNCTION( BlueprintNativeEvent, Category = "Significance" )
     void K2_PostSignificanceUpdate( FName tag, float old_significance, float new_significance, bool is_final );
 
+    virtual void PostSignificanceUpdate( FName tag, float old_significance, float new_significance, bool is_final );
+
 private:
     float GetSignificance( const USignificanceManager::FManagedObjectInfo * managed_object_info, const FTransform & view_transform );
     void PostSignificanceUpdate( const USignificanceManager::FManagedObjectInfo * managed_object_info, float old_significance, float new_significance, bool is_final );
     float GetSignificanceByDistance( const FTransform & view_transform ) const;
+
+    UPROPERTY( EditDefaultsOnly, Category = "Significance" )
+    uint8 bUseConcurrentPostUpdate : 1;
 
     UPROPERTY( EditDefaultsOnly, Category = "Significance" )
     FName SignificanceTag;

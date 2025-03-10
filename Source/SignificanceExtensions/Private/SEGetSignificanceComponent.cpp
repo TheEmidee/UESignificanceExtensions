@@ -106,6 +106,10 @@ void USEGetSignificanceComponent::K2_PostSignificanceUpdate_Implementation( FNam
 {
 }
 
+void USEGetSignificanceComponent::PostSignificanceUpdate( FName tag, float old_significance, float new_significance, bool is_final )
+{
+}
+
 float USEGetSignificanceComponent::GetSignificance( const USignificanceManager::FManagedObjectInfo * managed_object_info, const FTransform & view_transform )
 {
     if ( bUseFixedSignificance )
@@ -143,7 +147,10 @@ void USEGetSignificanceComponent::PostSignificanceUpdate( const USignificanceMan
     if ( bComponentImplementsPostSignificanceUpdate )
     {
         K2_PostSignificanceUpdate( managed_object_info->GetTag(), old_significance, new_significance, is_final );
+        return;
     }
+
+    PostSignificanceUpdate( managed_object_info->GetTag(), old_significance, new_significance, is_final );
 }
 
 float USEGetSignificanceComponent::GetSignificanceByDistance( const FTransform & view_transform ) const
