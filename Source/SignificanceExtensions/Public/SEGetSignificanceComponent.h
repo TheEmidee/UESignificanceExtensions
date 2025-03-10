@@ -28,7 +28,7 @@ struct FSESignificanceDistance
 };
 
 UCLASS( Blueprintable, ClassGroup = ( Custom ), meta = ( BlueprintSpawnableComponent ) )
-class SIGNIFICANCEEXTENSIONS_API USEGetSignificanceComponent final : public UActorComponent
+class SIGNIFICANCEEXTENSIONS_API USEGetSignificanceComponent : public UActorComponent
 {
     GENERATED_BODY()
 
