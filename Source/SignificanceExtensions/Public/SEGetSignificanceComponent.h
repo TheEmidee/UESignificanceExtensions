@@ -69,6 +69,8 @@ private:
     UPROPERTY( EditDefaultsOnly, Category = "Significance", meta = ( EditCondition = "bUseFixedSignificance" ) )
     float FixedSignificance;
 
+    // Gives a significance based on an array of distances
+    // If empty, the significance will be the distance from the player
     UPROPERTY( EditDefaultsOnly, Category = "Significance", meta = ( EditCondition = "!bUseFixedSignificance" ) )
     TArray< FSESignificanceDistance > SignificanceDistances;
 

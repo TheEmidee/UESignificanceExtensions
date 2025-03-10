@@ -156,16 +156,16 @@ void USEGetSignificanceComponent::PostSignificanceUpdate( const USignificanceMan
 float USEGetSignificanceComponent::GetSignificanceByDistance( const FTransform & view_transform ) const
 {
     const auto actor_location = GetOwner()->GetActorLocation();
-    const auto distance_squared = FVector::DistSquared( actor_location, view_transform.GetLocation() );
+    const auto distance = FVector::Dist( actor_location, view_transform.GetLocation() );
 
     for ( auto index = SignificanceDistances.Num() - 1; index >= 0; index-- )
     {
         const auto significance_distance = SignificanceDistances[ index ];
-        if ( distance_squared >= FMath::Square( significance_distance.DistanceThreshold ) )
+        if ( distance >= significance_distance.DistanceThreshold )
         {
             return significance_distance.Significance;
         }
     }
 
-    return 1.0f;
+    return distance;
 }
