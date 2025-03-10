@@ -7,6 +7,7 @@
 
 USEGetSignificanceComponent::USEGetSignificanceComponent( const FObjectInitializer & object_initializer ) :
     Super( object_initializer ),
+    bUseConcurrentPostUpdate( true ),
     bUseFixedSignificance( false ),
     FixedSignificance( 1.0f ),
     bOwnerImplementsInterface( false )
@@ -89,7 +90,7 @@ void USEGetSignificanceComponent::BeginPlay()
             [ & ]( const USignificanceManager::FManagedObjectInfo * managed_object_info, const FTransform & view_transform ) {
                 return GetSignificance( managed_object_info, view_transform );
             },
-            USignificanceManager::EPostSignificanceType::Sequential,
+            bUseConcurrentPostUpdate ? USignificanceManager::EPostSignificanceType::Concurrent : USignificanceManager::EPostSignificanceType::Sequential,
             [ & ]( const USignificanceManager::FManagedObjectInfo * managed_object_info, float old_significance, float new_significance, bool is_final ) {
                 PostSignificanceUpdate( managed_object_info, old_significance, new_significance, is_final );
             } );
