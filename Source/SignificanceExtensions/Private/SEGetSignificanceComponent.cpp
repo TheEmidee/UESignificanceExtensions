@@ -201,7 +201,7 @@ float USEGetSignificanceComponent::GetSignificanceByDistanceThreshold( const FTr
         }
     }
 
-    return 0.0f;
+    return 1.0f;
 }
 
 float USEGetSignificanceComponent::GetSignificanceByMaxDistance( const FTransform & view_transform ) const
