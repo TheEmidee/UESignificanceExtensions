@@ -7,6 +7,7 @@
 
 USEGetSignificanceComponent::USEGetSignificanceComponent( const FObjectInitializer & object_initializer ) :
     Super( object_initializer ),
+    bUseConcurrentPostUpdate( true ),
     ComputationType( ESESignificanceComputationType::MaxDistance ),
     FixedSignificance( 1.0f ),
     MaxDistance( 3000.0f ),
