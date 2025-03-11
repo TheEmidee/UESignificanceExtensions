@@ -49,6 +49,8 @@ public:
     EDataValidationResult IsDataValid( FDataValidationContext & context ) const override;
 #endif
 
+    void SetSignificanceTag( const FName tag );
+
 protected:
     void BeginPlay() override;
 
@@ -90,3 +92,8 @@ private:
     bool bOwnerImplementsInterface;
     float MaxDistanceSquared;
 };
+
+FORCEINLINE void USEGetSignificanceComponent::SetSignificanceTag( const FName tag )
+{
+    SignificanceTag = tag;
+}
