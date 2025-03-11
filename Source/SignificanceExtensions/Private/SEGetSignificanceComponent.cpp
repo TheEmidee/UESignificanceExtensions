@@ -7,6 +7,7 @@
 
 USEGetSignificanceComponent::USEGetSignificanceComponent( const FObjectInitializer & object_initializer ) :
     Super( object_initializer ),
+    bUseConcurrentPostUpdate( true ),
     bUseFixedSignificance( false ),
     FixedSignificance( 1.0f ),
     bOwnerImplementsInterface( false )
@@ -89,7 +90,7 @@ void USEGetSignificanceComponent::BeginPlay()
             [ & ]( const USignificanceManager::FManagedObjectInfo * managed_object_info, const FTransform & view_transform ) {
                 return GetSignificance( managed_object_info, view_transform );
             },
-            USignificanceManager::EPostSignificanceType::Sequential,
+            bUseConcurrentPostUpdate ? USignificanceManager::EPostSignificanceType::Concurrent : USignificanceManager::EPostSignificanceType::Sequential,
             [ & ]( const USignificanceManager::FManagedObjectInfo * managed_object_info, float old_significance, float new_significance, bool is_final ) {
                 PostSignificanceUpdate( managed_object_info, old_significance, new_significance, is_final );
             } );
@@ -102,6 +103,10 @@ float USEGetSignificanceComponent::K2_GetSignificance_Implementation( FName /*ta
 }
 
 void USEGetSignificanceComponent::K2_PostSignificanceUpdate_Implementation( FName /*tag*/, float /*old_significance*/, float /*new_significance*/, bool /*is_final*/ )
+{
+}
+
+void USEGetSignificanceComponent::PostSignificanceUpdate( FName tag, float old_significance, float new_significance, bool is_final )
 {
 }
 
@@ -142,22 +147,25 @@ void USEGetSignificanceComponent::PostSignificanceUpdate( const USignificanceMan
     if ( bComponentImplementsPostSignificanceUpdate )
     {
         K2_PostSignificanceUpdate( managed_object_info->GetTag(), old_significance, new_significance, is_final );
+        return;
     }
+
+    PostSignificanceUpdate( managed_object_info->GetTag(), old_significance, new_significance, is_final );
 }
 
 float USEGetSignificanceComponent::GetSignificanceByDistance( const FTransform & view_transform ) const
 {
     const auto actor_location = GetOwner()->GetActorLocation();
-    const auto distance_squared = FVector::DistSquared( actor_location, view_transform.GetLocation() );
+    const auto distance = FVector::Dist( actor_location, view_transform.GetLocation() );
 
     for ( auto index = SignificanceDistances.Num() - 1; index >= 0; index-- )
     {
         const auto significance_distance = SignificanceDistances[ index ];
-        if ( distance_squared >= FMath::Square( significance_distance.DistanceThreshold ) )
+        if ( distance >= significance_distance.DistanceThreshold )
         {
             return significance_distance.Significance;
         }
     }
 
-    return 1.0f;
+    return distance;
 }
