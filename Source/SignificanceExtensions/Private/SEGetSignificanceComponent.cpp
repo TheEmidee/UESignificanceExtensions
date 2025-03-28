@@ -8,9 +8,12 @@
 USEGetSignificanceComponent::USEGetSignificanceComponent( const FObjectInitializer & object_initializer ) :
     Super( object_initializer ),
     bUseConcurrentPostUpdate( true ),
-    bUseFixedSignificance( false ),
+    ComputationType( ESESignificanceComputationType::MaxDistance ),
     FixedSignificance( 1.0f ),
-    bOwnerImplementsInterface( false )
+    MaxDistance( 3000.0f ),
+    bComponentImplementsPostSignificanceUpdate( false ),
+    bOwnerImplementsInterface( false ),
+    MaxDistanceSquared( 1.0f )
 {
     PrimaryComponentTick.bCanEverTick = false;
 
@@ -43,27 +46,43 @@ void USEGetSignificanceComponent::EndPlay( const EEndPlayReason::Type end_play_r
 #if WITH_EDITOR
 EDataValidationResult USEGetSignificanceComponent::IsDataValid( FDataValidationContext & context ) const
 {
-    if ( !bUseFixedSignificance )
+    switch ( ComputationType )
     {
-        if ( SignificanceDistances.IsEmpty() )
+        case ESESignificanceComputationType::Fixed:
         {
-            context.AddError( FText::FromString( TEXT( "SignificanceDistances is empty and you don't use a fixed significance" ) ) );
         }
-        else
+        break;
+        case ESESignificanceComputationType::MaxDistance:
         {
-            auto previous_distance = SignificanceDistances[ 0 ].DistanceThreshold;
-            for ( auto index = 1; index < SignificanceDistances.Num(); ++index )
+        }
+        break;
+        case ESESignificanceComputationType::DistanceThreshold:
+        {
+            if ( SignificanceDistances.IsEmpty() )
             {
-                const auto current_distance = SignificanceDistances[ index ].DistanceThreshold;
-                if ( current_distance <= previous_distance )
+                context.AddError( FText::FromString( TEXT( "SignificanceDistances is empty and you don't use a fixed significance" ) ) );
+            }
+            else
+            {
+                auto previous_distance = SignificanceDistances[ 0 ].DistanceThreshold;
+                for ( auto index = 1; index < SignificanceDistances.Num(); ++index )
                 {
-                    context.AddError( FText::FromString( TEXT( "Distances in SignificanceDistances must be sorted from closest to farthest" ) ) );
-                    break;
-                }
+                    const auto current_distance = SignificanceDistances[ index ].DistanceThreshold;
+                    if ( current_distance <= previous_distance )
+                    {
+                        context.AddError( FText::FromString( TEXT( "Distances in SignificanceDistances must be sorted from closest to farthest" ) ) );
+                        break;
+                    }
 
-                previous_distance = current_distance;
+                    previous_distance = current_distance;
+                }
             }
         }
+        break;
+        default:
+        {
+            checkNoEntry();
+        };
     }
 
     return Super::IsDataValid( context );
@@ -73,6 +92,8 @@ EDataValidationResult USEGetSignificanceComponent::IsDataValid( FDataValidationC
 void USEGetSignificanceComponent::BeginPlay()
 {
     Super::BeginPlay();
+
+    MaxDistanceSquared = FMath::Square( MaxDistance );
 
     bOwnerImplementsInterface = Cast< ISEGetSignificanceInterface >( GetOwner() ) != nullptr;
 
@@ -112,11 +133,6 @@ void USEGetSignificanceComponent::PostSignificanceUpdate( FName tag, float old_s
 
 float USEGetSignificanceComponent::GetSignificance( const USignificanceManager::FManagedObjectInfo * managed_object_info, const FTransform & view_transform )
 {
-    if ( bUseFixedSignificance )
-    {
-        return FixedSignificance;
-    }
-
     if ( bOwnerImplementsInterface )
     {
         float significance;
@@ -131,7 +147,26 @@ float USEGetSignificanceComponent::GetSignificance( const USignificanceManager::
         return K2_GetSignificance( managed_object_info->GetTag(), view_transform );
     }
 
-    return GetSignificanceByDistance( view_transform );
+    switch ( ComputationType )
+    {
+        case ESESignificanceComputationType::Fixed:
+        {
+            return FixedSignificance;
+        }
+        case ESESignificanceComputationType::MaxDistance:
+        {
+            return GetSignificanceByMaxDistance( view_transform );
+        }
+        case ESESignificanceComputationType::DistanceThreshold:
+        {
+            return GetSignificanceByDistanceThreshold( view_transform );
+        }
+        default:
+        {
+            checkNoEntry();
+            return 0.0f;
+        };
+    }
 }
 
 void USEGetSignificanceComponent::PostSignificanceUpdate( const USignificanceManager::FManagedObjectInfo * managed_object_info, float old_significance, float new_significance, bool is_final )
@@ -153,7 +188,7 @@ void USEGetSignificanceComponent::PostSignificanceUpdate( const USignificanceMan
     PostSignificanceUpdate( managed_object_info->GetTag(), old_significance, new_significance, is_final );
 }
 
-float USEGetSignificanceComponent::GetSignificanceByDistance( const FTransform & view_transform ) const
+float USEGetSignificanceComponent::GetSignificanceByDistanceThreshold( const FTransform & view_transform ) const
 {
     const auto actor_location = GetOwner()->GetActorLocation();
     const auto distance = FVector::Dist( actor_location, view_transform.GetLocation() );
@@ -167,5 +202,16 @@ float USEGetSignificanceComponent::GetSignificanceByDistance( const FTransform &
         }
     }
 
-    return distance;
+    return 1.0f;
+}
+
+float USEGetSignificanceComponent::GetSignificanceByMaxDistance( const FTransform & view_transform ) const
+{
+    const auto actor_location = GetOwner()->GetActorLocation();
+    const auto distance_sqr = FVector::DistSquared( actor_location, view_transform.GetLocation() );
+
+    auto significance = FMath::Max( MaxDistanceSquared - distance_sqr, 1.0f ) / MaxDistanceSquared;
+    significance = FMath::Max( 0.0f, significance );
+
+    return significance;
 }
