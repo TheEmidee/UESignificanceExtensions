@@ -95,7 +95,7 @@ void USEGetSignificanceComponent::BeginPlay()
 
     MaxDistanceSquared = FMath::Square( MaxDistance );
 
-    bOwnerImplementsInterface = Cast< ISEGetSignificanceInterface >( GetOwner() ) != nullptr;
+    bOwnerImplementsInterface = GetOwner()->GetClass()->ImplementsInterface( USEGetSignificanceInterface::StaticClass() );
 
     if ( auto * significance_manager = USignificanceManager::Get< USignificanceManager >( GetWorld() ) )
     {
