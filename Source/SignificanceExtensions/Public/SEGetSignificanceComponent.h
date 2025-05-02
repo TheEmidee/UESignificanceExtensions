@@ -62,7 +62,6 @@ protected:
 
     virtual void PostSignificanceUpdate( FName tag, float old_significance, float new_significance, bool is_final );
 
-private:
     float GetSignificance( const USignificanceManager::FManagedObjectInfo * managed_object_info, const FTransform & view_transform );
     void PostSignificanceUpdate( const USignificanceManager::FManagedObjectInfo * managed_object_info, float old_significance, float new_significance, bool is_final );
     float GetSignificanceByDistanceThreshold( const FTransform & view_transform ) const;
