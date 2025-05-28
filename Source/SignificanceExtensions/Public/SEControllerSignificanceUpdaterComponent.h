@@ -17,4 +17,6 @@ public:
 
 private:
     APlayerController * GetPlayerController() const;
+
+    bool bDestroyNextTick;
 };
