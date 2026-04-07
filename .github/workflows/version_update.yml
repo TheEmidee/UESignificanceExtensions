@@ -1,0 +1,92 @@
+name: Check Version Updates
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  check-version-consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check version consistency
+        run: |
+          set +e  # Don't exit on first error, collect all issues
+          ERRORS=0
+          
+          echo "🔍 Checking version updates..."
+          echo ""
+          
+          # Check if CHANGELOG.md was modified
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          
+          if ! echo "$CHANGED_FILES" | grep -q "^CHANGELOG.md$"; then
+            echo "❌ CHANGELOG.md has not been updated"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "✅ CHANGELOG.md was modified"
+          fi
+          echo ""
+          
+          # Extract the latest version from CHANGELOG.md
+          CHANGELOG_VERSION=$(grep -oP '##\s*\[\K[0-9]+\.[0-9]+\.[0-9]+' CHANGELOG.md | head -n 1)
+          
+          if [ -z "$CHANGELOG_VERSION" ]; then
+            echo "❌ Could not find a version entry in CHANGELOG.md (format: ## [X.Y.Z] - YYYY-MM-DD)"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "📋 Latest CHANGELOG version: $CHANGELOG_VERSION"
+            
+            # Check if this version was added in this PR
+            git diff origin/${{ github.base_ref }}...HEAD CHANGELOG.md | grep -q "^+.*## \[$CHANGELOG_VERSION\]"
+            if [ $? -eq 0 ]; then
+              echo "✅ New version entry added to CHANGELOG.md"
+            else
+              echo "⚠️  Version $CHANGELOG_VERSION exists but wasn't added in this PR"
+            fi
+          fi
+          echo ""
+          
+          # Find and check .uplugin file
+          UPLUGIN_FILE=$(find . -name "*.uplugin" -type f | head -n 1)
+          
+          if [ -z "$UPLUGIN_FILE" ]; then
+            echo "❌ Could not find .uplugin file"
+            ERRORS=$((ERRORS + 1))
+          else
+            echo "🎮 Found plugin file: $UPLUGIN_FILE"
+            
+            UPLUGIN_VERSION=$(grep -oP '"VersionName"\s*:\s*"\K[0-9]+\.[0-9]+\.[0-9]+' "$UPLUGIN_FILE")
+            
+            if [ -z "$UPLUGIN_VERSION" ]; then
+              echo "❌ Could not find VersionName in $UPLUGIN_FILE"
+              ERRORS=$((ERRORS + 1))
+            else
+              echo "🔌 .uplugin VersionName: $UPLUGIN_VERSION"
+              
+              if [ "$UPLUGIN_VERSION" = "$CHANGELOG_VERSION" ]; then
+                echo "✅ .uplugin version matches CHANGELOG.md"
+              else
+                echo "❌ .uplugin version ($UPLUGIN_VERSION) does not match CHANGELOG.md ($CHANGELOG_VERSION)"
+                ERRORS=$((ERRORS + 1))
+              fi
+            fi
+          fi
+          echo ""
+          
+          # Summary
+          if [ $ERRORS -eq 0 ]; then
+            echo "🎉 All version checks passed!"
+            exit 0
+          else
+            echo "💥 Found $ERRORS error(s)"
+            echo ""
+            echo "Please ensure:"
+            echo "  1. CHANGELOG.md is updated with a new version entry (## [X.Y.Z] - YYYY-MM-DD)"
+            echo "  2. .uplugin VersionName matches the CHANGELOG version"
+            exit 1
+          fi
