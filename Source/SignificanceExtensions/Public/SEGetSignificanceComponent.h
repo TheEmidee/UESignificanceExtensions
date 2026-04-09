@@ -43,6 +43,11 @@ class SIGNIFICANCEEXTENSIONS_API USEGetSignificanceComponent : public UActorComp
 public:
     explicit USEGetSignificanceComponent( const FObjectInitializer & object_initializer );
 
+    float GetLastComputedSignificance() const
+    {
+        return LastComputedSignificance;
+    }
+
     void EndPlay( const EEndPlayReason::Type end_play_reason ) override;
 
 #if WITH_EDITOR
@@ -90,6 +95,7 @@ protected:
     bool bComponentImplementsPostSignificanceUpdate;
     bool bOwnerImplementsInterface;
     float MaxDistanceSquared;
+    float LastComputedSignificance;
 };
 
 FORCEINLINE void USEGetSignificanceComponent::SetSignificanceTag( const FName tag )

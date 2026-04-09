@@ -2,7 +2,6 @@
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Unreal Engine](https://img.shields.io/badge/Unreal%20Engine-5.3%2B-blue.svg)](https://unrealengine.com/)
-[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](https://github.com/yourusername/yourplugin/releases)
 
 ## Overview
 

@@ -13,7 +13,8 @@ USEGetSignificanceComponent::USEGetSignificanceComponent( const FObjectInitializ
     MaxDistance( 3000.0f ),
     bComponentImplementsPostSignificanceUpdate( false ),
     bOwnerImplementsInterface( false ),
-    MaxDistanceSquared( 1.0f )
+    MaxDistanceSquared( 1.0f ),
+    LastComputedSignificance( 0.0f )
 {
     PrimaryComponentTick.bCanEverTick = false;
 
@@ -109,7 +110,8 @@ void USEGetSignificanceComponent::BeginPlay()
             this,
             tag,
             [ & ]( const USignificanceManager::FManagedObjectInfo * managed_object_info, const FTransform & view_transform ) {
-                return GetSignificance( managed_object_info, view_transform );
+                LastComputedSignificance = GetSignificance( managed_object_info, view_transform );
+                return LastComputedSignificance;
             },
             bUseConcurrentPostUpdate ? USignificanceManager::EPostSignificanceType::Concurrent : USignificanceManager::EPostSignificanceType::Sequential,
             [ & ]( const USignificanceManager::FManagedObjectInfo * managed_object_info, float old_significance, float new_significance, bool is_final ) {
@@ -210,8 +212,8 @@ float USEGetSignificanceComponent::GetSignificanceByMaxDistance( const FTransfor
     const auto actor_location = GetOwner()->GetActorLocation();
     const auto distance_sqr = FVector::DistSquared( actor_location, view_transform.GetLocation() );
 
-    auto significance = FMath::Max( MaxDistanceSquared - distance_sqr, 1.0f ) / MaxDistanceSquared;
-    significance = FMath::Max( 0.0f, significance );
+    auto significance = 1.0f - distance_sqr / MaxDistanceSquared;
+    significance = FMath::Clamp( 0.0f, significance, 1.0f );
 
     return significance;
 }
